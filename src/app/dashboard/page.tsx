@@ -2,18 +2,27 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { UserButton } from "@clerk/nextjs";
-import { desc, eq, sql } from "drizzle-orm";
+import { count, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories } from "@/db/schema";
 import { NewsCard, NewsCardSkeleton } from "@/components/news-card";
+import { FetchNewsButton } from "@/components/fetch-news-button";
+import { Pagination } from "@/components/pagination";
 
 export const metadata: Metadata = {
   title: "대시보드 | AI 뉴스 수집기",
 };
 
 const GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
+const PAGE_SIZE = 6;
 
-export default function DashboardPage() {
+type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+
+export default function DashboardPage({
+  searchParams,
+}: {
+  searchParams: SearchParams;
+}) {
   return (
     <div className="min-h-full flex-1 bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
@@ -22,6 +31,7 @@ export default function DashboardPage() {
             AI 뉴스 수집기
           </h1>
           <div className="flex items-center gap-3">
+            <FetchNewsButton />
             <UserButton />
           </div>
         </div>
@@ -29,16 +39,26 @@ export default function DashboardPage() {
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
         <Suspense fallback={<NewsGridSkeleton />}>
-          <NewsGrid />
+          <NewsGrid searchParams={searchParams} />
         </Suspense>
       </main>
     </div>
   );
 }
 
-async function NewsGrid() {
+function parsePage(value: string | string[] | undefined) {
+  const n = Number(Array.isArray(value) ? value[0] : value);
+  return Number.isInteger(n) && n >= 1 ? n : 1;
+}
+
+async function NewsGrid({ searchParams }: { searchParams: SearchParams }) {
   // 요청 시점마다 최신 데이터를 읽는다 (캐시하지 않음)
   await connection();
+
+  const [{ total }] = await db.select({ total: count() }).from(articles);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  // 범위를 벗어난 페이지 번호는 마지막 페이지로 맞춘다
+  const page = Math.min(parsePage((await searchParams).page), totalPages);
 
   const rows = await db
     .select({
@@ -59,7 +79,9 @@ async function NewsGrid() {
     .orderBy(
       desc(sql`coalesce(${articles.publishedAt}, ${articles.createdAt})`),
       desc(articles.id),
-    );
+    )
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
 
   if (rows.length === 0) {
     return (
@@ -77,18 +99,21 @@ async function NewsGrid() {
   const now = new Date();
 
   return (
-    <div className={GRID}>
-      {rows.map((article) => (
-        <NewsCard key={article.id} article={article} now={now} />
-      ))}
-    </div>
+    <>
+      <div className={GRID}>
+        {rows.map((article) => (
+          <NewsCard key={article.id} article={article} now={now} />
+        ))}
+      </div>
+      <Pagination page={page} totalPages={totalPages} />
+    </>
   );
 }
 
 function NewsGridSkeleton() {
   return (
     <div className={GRID} aria-busy="true" aria-label="뉴스 불러오는 중">
-      {Array.from({ length: 6 }, (_, i) => (
+      {Array.from({ length: PAGE_SIZE }, (_, i) => (
         <NewsCardSkeleton key={i} />
       ))}
     </div>
