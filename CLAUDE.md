@@ -8,7 +8,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 해외 AI 뉴스(TechCrunch AI, The Verge AI RSS)를 수집해 Claude API로 한국어 제목·요약·카테고리를 생성하고 카드로 보여주는 웹 앱. 원하는 기사는 Notion DB에 저장한다. **요구사항의 기준 문서는 `PRD.md`** — 기능(F1~F6), 데이터 모델, 화면 구성, 미결정 사항은 그 문서를 따른다.
 
-현재 상태: `create-next-app` 스캐폴드와 의존성 설치까지만 완료. 앱 코드(스키마, 미들웨어, API 라우트, UI)는 아직 없다.
+현재 상태: 스캐폴드, Clerk 설정, DB 스키마(`src/db/schema.ts`)와 마이그레이션(`drizzle/`, 초기 카테고리 시드 포함)까지 완료. API 라우트와 UI는 아직 없다. 앱 코드에서는 `import { db } from "@/db"`로 DB에 접근한다. 스키마를 바꾸면 `npx drizzle-kit generate` → `npx drizzle-kit migrate` 순서로 반영한다.
 
 ## 명령어
 
