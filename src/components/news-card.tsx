@@ -16,7 +16,7 @@ export type NewsCardArticle = Pick<
 > & { categoryName: string | null };
 
 const secondaryButton =
-  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-900";
+  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-900";
 
 export function NewsCard({
   article,
@@ -26,7 +26,7 @@ export function NewsCard({
   now: Date;
 }) {
   return (
-    <article className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+    <article className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-900">
       <div className="flex items-center justify-between gap-2">
         <span
           className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryColor(article.categoryId)}`}
@@ -52,7 +52,7 @@ export function NewsCard({
           target="_blank"
           rel="noopener noreferrer"
           title={article.originalTitle}
-          className="hover:underline"
+          className="transition-colors hover:text-blue-700 dark:hover:text-blue-400"
         >
           {article.titleKo}
         </a>
@@ -67,7 +67,7 @@ export function NewsCard({
           href={article.originalUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400"
+          className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
         >
           원문 보기 ↗
         </a>

@@ -8,7 +8,7 @@ AI 뉴스 수집기 화면을 만들 때 따르는 UI 규칙이다. 기능 요�
 ## 1. 디자인 원칙
 
 1. **읽기가 먼저다** — 이 앱의 핵심은 한국어 제목과 요약을 빠르게 훑어보는 것이다. 장식보다 글자 크기, 줄 간격, 여백을 우선한다.
-2. **색은 의미가 있을 때만 쓴다** — 화면은 무채색(zinc)을 기본으로 하고, 강조색(indigo)은 주요 행동(뉴스 가져오기, 선택된 카테고리)에만 쓴다.
+2. **색은 의미가 있을 때만 쓴다** — 화면은 무채색(zinc)을 기본으로 하고, 강조색(blue)은 주요 행동(뉴스 가져오기, 선택된 카테고리)에만 쓴다.
 3. **일관성** — 같은 역할의 요소는 어디서나 같은 클래스를 쓴다. 아래 컴포넌트 규칙을 복사해서 쓰고, 새 변형이 필요하면 이 문서에 먼저 추가한다.
 4. **상태를 항상 보여준다** — 로딩, 빈 목록, 실패, 저장 완료 상태를 모두 화면에 표시한다.
 
@@ -28,7 +28,7 @@ Tailwind 기본 팔레트만 쓴다. 다크 모드는 `dark:` 변형으로 지�
 | 본문 텍스트 | `text-zinc-900` | `dark:text-zinc-100` | 제목 |
 | 보조 텍스트 | `text-zinc-600` | `dark:text-zinc-400` | 요약 |
 | 흐린 텍스트 | `text-zinc-500` | `dark:text-zinc-500` | 출처, 날짜, 메타 정보 |
-| 강조(primary) | `bg-indigo-600` / `text-indigo-600` | `dark:bg-indigo-500` / `dark:text-indigo-400` | 주요 버튼, 선택된 칩, 링크 |
+| 강조(primary) | `bg-blue-600` / `text-blue-600` | `dark:bg-blue-500` / `dark:text-blue-400` | 주요 버튼, 선택된 칩, 링크 |
 | 성공 | `text-emerald-600` | `dark:text-emerald-400` | Notion 저장됨 |
 | 오류 | `text-red-600`, `bg-red-50` | `dark:text-red-400`, `dark:bg-red-950/40` | 오류 메시지 |
 
@@ -84,13 +84,15 @@ export function categoryColor(id: number | null) {
 | 카드 내부 여백 | `p-5` |
 | 카드 그리드 간격 | `gap-4 sm:gap-5` |
 | 모서리 | 카드·모달 `rounded-xl`, 버튼·입력창 `rounded-lg`, 칩·배지 `rounded-full` |
-| 그림자 | 카드 `shadow-sm`, 호버 시 `hover:shadow-md`. 그 외에는 그림자를 쓰지 않는다 |
+| 그림자 | 카드 `shadow-sm`, 호버 시 `hover:shadow-md`(테두리도 `hover:border-blue-200` / `dark:hover:border-blue-900`로 살짝 파랗게). 그 외에는 그림자를 쓰지 않는다 |
 
 ---
 
 ## 3. 레이아웃
 
-### 3.1 메인 화면 (`/`) 구조
+### 3.1 메인 화면(대시보드, `/dashboard`) 구조
+
+`/`로 접속하면 `/dashboard`로 이동한다.
 
 ```
 ┌──────────────────────────────────────────────────────────┐
@@ -152,11 +154,11 @@ export function categoryColor(id: number | null) {
 
 | 종류 | 용도 | 클래스 |
 |---|---|---|
-| Primary | 뉴스 가져오기, 모달의 저장 | `inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-indigo-500 dark:hover:bg-indigo-400` |
+| Primary | 뉴스 가져오기, 모달의 저장 | `inline-flex items-center gap-2 rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-blue-500 dark:hover:bg-blue-400` |
 | Secondary | Notion 저장, 취소 | `inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800` |
 | Danger | 카테고리 삭제 | Secondary와 같되 `text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40` |
 
-- 모든 버튼에 포커스 링을 준다: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900`
+- 모든 버튼에 포커스 링을 준다: `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-zinc-900`
 - 처리 중인 버튼은 `disabled`로 만들고, 아이콘을 스피너로 바꾸고, 문구를 진행형으로 바꾼다. 예: `뉴스 가져오기` → `가져오는 중…`
 - 스피너: `<span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />`
 
@@ -173,7 +175,7 @@ export function categoryColor(id: number | null) {
         aria-pressed={selected}
         className={
           selected
-            ? "rounded-full bg-indigo-600 px-3.5 py-1.5 text-sm font-medium text-white dark:bg-indigo-500"
+            ? "rounded-full bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white dark:bg-blue-500"
             : "rounded-full border border-zinc-200 bg-white px-3.5 py-1.5 text-sm font-medium text-zinc-700 hover:border-zinc-300 hover:bg-zinc-50 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-300 dark:hover:bg-zinc-800"
         }
       >
@@ -184,7 +186,7 @@ export function categoryColor(id: number | null) {
 
     {/* 맨 끝: 카테고리 추가 */}
     <li>
-      <button className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 px-3.5 py-1.5 text-sm font-medium text-zinc-500 hover:border-indigo-400 hover:text-indigo-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-indigo-400 dark:hover:text-indigo-400">
+      <button className="inline-flex items-center gap-1 rounded-full border border-dashed border-zinc-300 px-3.5 py-1.5 text-sm font-medium text-zinc-500 hover:border-blue-400 hover:text-blue-600 dark:border-zinc-700 dark:text-zinc-400 dark:hover:border-blue-400 dark:hover:text-blue-400">
         <PlusIcon className="size-4" aria-hidden />
         카테고리 추가
       </button>
@@ -194,12 +196,12 @@ export function categoryColor(id: number | null) {
 ```
 
 규칙:
-- **선택 상태**는 채워진 indigo 칩으로 표시하고, 선택은 한 번에 하나만 된다. 기본 선택은 '전체'다.
+- **선택 상태**는 채워진 blue 칩으로 표시하고, 선택은 한 번에 하나만 된다. 기본 선택은 '전체'다.
 - 칩 이름 옆에 기사 수를 작게 보여준다(선택 사항이지만 권장).
 - **'미분류'** 칩은 미분류 기사가 1건 이상일 때만 보여준다.
 - **추가 버튼**은 점선 테두리로 필터 칩과 구분한다. 필터가 아니라 행동이라는 뜻이다.
 - 모바일에서는 줄바꿈 없이 가로 스크롤하고, `sm` 이상에서는 줄바꿈한다.
-- 선택한 카테고리는 URL 쿼리(`/?category=3`)에 반영해서 새로고침해도 유지되게 한다.
+- 선택한 카테고리는 URL 쿼리(`/dashboard?category=3`)에 반영해서 새로고침해도 유지되게 한다.
 
 ### 4.4 카테고리 추가 모달
 
@@ -215,12 +217,12 @@ export function categoryColor(id: number | null) {
     <form className="mt-4 space-y-4">
       <label className="block">
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">이름</span>
-        <input className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100" />
+        <input className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100" />
       </label>
       <label className="block">
         <span className="text-sm font-medium text-zinc-700 dark:text-zinc-300">설명</span>
         <textarea rows={3} placeholder="예: 반도체, GPU, 데이터센터 등 AI 인프라 관련 뉴스"
-                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100" />
+                  className="mt-1 block w-full rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm text-zinc-900 placeholder:text-zinc-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/30 dark:border-zinc-700 dark:bg-zinc-950 dark:text-zinc-100" />
         <span className="mt-1 block text-xs text-zinc-500">
           Claude가 뉴스를 분류할 때 이 설명을 기준으로 씁니다. 이후 가져오는 뉴스부터 적용됩니다.
         </span>
@@ -256,7 +258,7 @@ export function categoryColor(id: number | null) {
 ```
 
 ```tsx
-<article className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition-shadow hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900">
+<article className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-900">
   <div className="flex items-center justify-between gap-2">
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryColor(article.categoryId)}`}>
       {categoryName ?? "미분류"}
@@ -267,7 +269,7 @@ export function categoryColor(id: number | null) {
   </div>
 
   <h2 className="mt-3 line-clamp-2 break-keep text-base font-semibold leading-snug text-zinc-900 sm:text-lg dark:text-zinc-100">
-    <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" className="hover:underline">
+    <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-blue-700 dark:hover:text-blue-400">
       {article.titleKo}
     </a>
   </h2>
@@ -278,7 +280,7 @@ export function categoryColor(id: number | null) {
 
   <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
     <a href={article.originalUrl} target="_blank" rel="noopener noreferrer"
-       className="text-sm font-medium text-indigo-600 hover:underline dark:text-indigo-400">
+       className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
       원문 보기 ↗
     </a>
     <NotionSaveButton />
@@ -289,6 +291,7 @@ export function categoryColor(id: number | null) {
 - 같은 줄의 카드 높이가 달라도 하단 액션이 바닥에 맞춰지도록 액션 영역에 `mt-auto`를 준다. 요약과 액션 사이가 붙지 않도록 요약 `<p>`에 `mb-4`를 준다.
 - **출처 표기**: `techcrunch` → `TechCrunch`, `theverge` → `The Verge`.
 - **날짜 표기**: 올해 기사는 `11월 18일`, 이전 해는 `2025년 11월 18일`. `Intl.DateTimeFormat("ko-KR", …)`을 쓰고 한국 시간대(`Asia/Seoul`)로 표시한다. `publishedAt`이 없으면 날짜를 생략한다.
+- 카드에 마우스를 올리면 그림자가 짙어지고 테두리가 옅은 파랑으로 바뀐다. 제목 링크는 밑줄 대신 파란색(`hover:text-blue-700`)으로 바뀐다.
 - 원문 제목(`originalTitle`)은 제목 링크의 `title` 속성으로 넣어서 마우스를 올리면 보이게 한다.
 
 **카드 그리드**
