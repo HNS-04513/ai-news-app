@@ -13,6 +13,7 @@ import {
 } from "@/components/category-bar";
 import { FetchNewsButton } from "@/components/fetch-news-button";
 import { Pagination } from "@/components/pagination";
+import { AppFooter } from "@/components/app-footer";
 
 export const metadata: Metadata = {
   title: "대시보드 | AI 뉴스 수집기",
@@ -25,7 +26,7 @@ export default function DashboardPage({
   searchParams,
 }: PageProps<"/dashboard">) {
   return (
-    <div className="min-h-full flex-1 bg-zinc-50 dark:bg-zinc-950">
+    <div className="flex min-h-full flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
         <div className="mx-auto flex h-14 max-w-6xl items-center justify-between px-4 sm:px-6">
           <h1 className="text-lg font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
@@ -38,12 +39,15 @@ export default function DashboardPage({
         </div>
       </header>
 
-      <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+      {/* 기사가 적어도 푸터가 화면 아래에 붙도록 main이 남는 높이를 채운다 */}
+      <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
         {/* searchParams는 요청 시점 값이라 Suspense 안에서 읽는다 (정적 셸 유지) */}
         <Suspense fallback={<DashboardSkeleton />}>
           <DashboardContent searchParams={searchParams} />
         </Suspense>
       </main>
+
+      <AppFooter />
     </div>
   );
 }

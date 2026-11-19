@@ -27,13 +27,15 @@ export function DeleteArticleButton({
 
   return (
     <div className="relative -mr-1.5 shrink-0">
+      {/* 마우스 환경에서는 카드에 올리거나 포커스할 때만 보이고, 터치 환경에서는 항상 보인다.
+          삭제 중이거나 오류가 있으면 계속 보인다 */}
       <button
         type="button"
         onClick={handleClick}
         disabled={pending}
         aria-label="뉴스 삭제"
         title="뉴스 삭제"
-        className="flex rounded-md p-0.5 text-zinc-400 hover:bg-red-50 hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-zinc-500 dark:hover:bg-red-950/40 dark:hover:text-red-400 dark:focus-visible:ring-offset-zinc-900"
+        className={`flex rounded-md p-0.5 text-zinc-500 transition hover:bg-red-50 ${pending || error ? "" : "pointer-fine:opacity-0 pointer-fine:group-hover:opacity-100 pointer-fine:group-focus-within:opacity-100"} hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:text-zinc-400 dark:hover:bg-red-950/40 dark:hover:text-red-400 dark:focus-visible:ring-offset-zinc-900`}
       >
         {pending ? (
           <span
