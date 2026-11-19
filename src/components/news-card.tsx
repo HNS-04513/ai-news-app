@@ -2,6 +2,7 @@ import type { Article } from "@/db/schema";
 import { categoryColor } from "@/lib/category-colors";
 import { formatArticleDate, sourceLabel } from "@/lib/format";
 import { NotionSaveButton } from "@/components/notion-save-button";
+import { DeleteArticleButton } from "@/components/delete-article-button";
 
 export type NewsCardArticle = Pick<
   Article,
@@ -31,17 +32,20 @@ export function NewsCard({
         >
           {article.categoryName ?? "미분류"}
         </span>
-        <p className="shrink-0 text-xs text-zinc-500">
-          {sourceLabel(article.source)}
-          {article.publishedAt && (
-            <>
-              {" · "}
-              <time dateTime={article.publishedAt.toISOString()}>
-                {formatArticleDate(article.publishedAt, now)}
-              </time>
-            </>
-          )}
-        </p>
+        <div className="flex shrink-0 items-center gap-2">
+          <p className="text-xs text-zinc-500">
+            {sourceLabel(article.source)}
+            {article.publishedAt && (
+              <>
+                {" · "}
+                <time dateTime={article.publishedAt.toISOString()}>
+                  {formatArticleDate(article.publishedAt, now)}
+                </time>
+              </>
+            )}
+          </p>
+          <DeleteArticleButton articleId={article.id} title={article.titleKo} />
+        </div>
       </div>
 
       <h2 className="mt-3 line-clamp-2 break-keep text-base font-semibold leading-snug text-zinc-900 sm:text-lg dark:text-zinc-100">
