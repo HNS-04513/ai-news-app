@@ -11,12 +11,15 @@ import {
   CategoryBarSkeleton,
   type CategoryFilter,
 } from "@/components/category-bar";
+import { FetchNewsButton } from "@/components/fetch-news-button";
+import { Pagination } from "@/components/pagination";
 
 export const metadata: Metadata = {
   title: "대시보드 | AI 뉴스 수집기",
 };
 
 const GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
+const PAGE_SIZE = 6;
 
 export default function DashboardPage({
   searchParams,
@@ -29,6 +32,7 @@ export default function DashboardPage({
             AI 뉴스 수집기
           </h1>
           <div className="flex items-center gap-3">
+            <FetchNewsButton />
             <UserButton />
           </div>
         </div>
@@ -44,11 +48,20 @@ export default function DashboardPage({
   );
 }
 
+function firstValue(value: string | string[] | undefined) {
+  return Array.isArray(value) ? value[0] : value;
+}
+
 function parseFilter(value: string | string[] | undefined): CategoryFilter {
-  const v = Array.isArray(value) ? value[0] : value;
+  const v = firstValue(value);
   if (v === "uncategorized") return "uncategorized";
   if (v && /^\d+$/.test(v)) return Number(v);
   return "all";
+}
+
+function parsePage(value: string | string[] | undefined) {
+  const n = Number(firstValue(value));
+  return Number.isInteger(n) && n >= 1 ? n : 1;
 }
 
 async function DashboardContent({
@@ -85,15 +98,25 @@ async function DashboardContent({
 
   let selected = parseFilter(query.category);
   // 없는 카테고리 id(삭제됨 등)나 미분류 기사가 없을 때는 '전체'로 본다
-  if (
-    typeof selected === "number" &&
-    !categoryRows.some((c) => c.id === selected)
-  ) {
-    selected = "all";
-  }
+  const selectedCategory =
+    typeof selected === "number"
+      ? categoryRows.find((c) => c.id === selected)
+      : undefined;
+  if (typeof selected === "number" && !selectedCategory) selected = "all";
   if (selected === "uncategorized" && totals.uncategorized === 0) {
     selected = "all";
   }
+
+  // 페이지 수는 선택한 카테고리의 기사 수 기준
+  const filteredTotal =
+    selected === "all"
+      ? totals.total
+      : selected === "uncategorized"
+        ? totals.uncategorized
+        : (selectedCategory?.count ?? 0);
+  const totalPages = Math.max(1, Math.ceil(filteredTotal / PAGE_SIZE));
+  // 범위를 벗어난 페이지 번호는 마지막 페이지로 맞춘다
+  const page = Math.min(parsePage(query.page), totalPages);
 
   const where =
     selected === "all"
@@ -122,7 +145,9 @@ async function DashboardContent({
     .orderBy(
       desc(sql`coalesce(${articles.publishedAt}, ${articles.createdAt})`),
       desc(articles.id),
-    );
+    )
+    .limit(PAGE_SIZE)
+    .offset((page - 1) * PAGE_SIZE);
 
   const now = new Date();
 
@@ -143,11 +168,18 @@ async function DashboardContent({
       ) : rows.length === 0 ? (
         <EmptyState title="이 카테고리에 해당하는 뉴스가 없습니다." />
       ) : (
-        <div className={GRID}>
-          {rows.map((article) => (
-            <NewsCard key={article.id} article={article} now={now} />
-          ))}
-        </div>
+        <>
+          <div className={GRID}>
+            {rows.map((article) => (
+              <NewsCard key={article.id} article={article} now={now} />
+            ))}
+          </div>
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            category={selected === "all" ? undefined : String(selected)}
+          />
+        </>
       )}
     </>
   );
@@ -177,7 +209,7 @@ function DashboardSkeleton() {
     <div className="space-y-6" aria-busy="true" aria-label="뉴스 불러오는 중">
       <CategoryBarSkeleton />
       <div className={GRID}>
-        {Array.from({ length: 6 }, (_, i) => (
+        {Array.from({ length: PAGE_SIZE }, (_, i) => (
           <NewsCardSkeleton key={i} />
         ))}
       </div>
