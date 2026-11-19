@@ -27,7 +27,7 @@ Tailwind 기본 팔레트만 쓴다. 다크 모드는 `dark:` 변형으로 지�
 | 테두리 | `border-zinc-200` | `dark:border-zinc-800` | 카드, 구분선, 입력창 |
 | 본문 텍스트 | `text-zinc-900` | `dark:text-zinc-100` | 제목 |
 | 보조 텍스트 | `text-zinc-600` | `dark:text-zinc-400` | 요약 |
-| 흐린 텍스트 | `text-zinc-500` | `dark:text-zinc-500` | 출처, 날짜, 메타 정보 |
+| 흐린 텍스트 | `text-zinc-500` | `dark:text-zinc-400` | 날짜, 메타 정보 (다크에서 `zinc-500`은 `zinc-900` 위 대비가 약 3.9:1로 AA 미달) |
 | 강조(primary) | `bg-blue-600` / `text-blue-600` | `dark:bg-blue-500` / `dark:text-blue-400` | 주요 버튼, 선택된 칩, 링크 |
 | 성공 | `text-emerald-600` | `dark:text-emerald-400` | Notion 저장됨 |
 | 오류 | `text-red-600`, `bg-red-50` | `dark:text-red-400`, `dark:bg-red-950/40` | 오류 메시지 |
@@ -65,9 +65,9 @@ export function categoryColor(id: number | null) {
 |---|---|
 | 앱 이름(헤더) | `text-lg font-bold tracking-tight` |
 | 페이지 제목 | `text-2xl font-bold tracking-tight` |
-| 카드 제목 | `text-base font-semibold leading-snug` (`sm:text-lg`) |
+| 카드 제목 | `text-base font-semibold leading-snug tracking-tight` (`sm:text-lg`) |
 | 카드 요약 | `text-sm leading-relaxed` |
-| 메타 정보(출처·날짜) | `text-xs` |
+| 메타 정보(출처·날짜) | `text-xs`, 출처는 `font-medium`으로 한 단계 진하게, 날짜는 `tabular-nums` |
 | 버튼·칩 | `text-sm font-medium` |
 
 - 한글 본문은 `leading-relaxed`(1.625) 이상을 쓴다. 줄 간격이 좁으면 한글은 금방 답답해 보인다.
@@ -81,10 +81,10 @@ export function categoryColor(id: number | null) {
 | 콘텐츠 최대 폭 | `max-w-6xl mx-auto` |
 | 페이지 좌우 여백 | `px-4 sm:px-6` |
 | 섹션 간 간격 | `space-y-6` / `gap-6` |
-| 카드 내부 여백 | `p-5` |
+| 카드 내부 여백 | `p-5 sm:p-6` |
 | 카드 그리드 간격 | `gap-4 sm:gap-5` |
-| 모서리 | 카드·모달 `rounded-xl`, 버튼·입력창 `rounded-lg`, 칩·배지 `rounded-full` |
-| 그림자 | 카드 `shadow-sm`, 호버 시 `hover:shadow-md`(테두리도 `hover:border-blue-200` / `dark:hover:border-blue-900`로 살짝 파랗게). 그 외에는 그림자를 쓰지 않는다 |
+| 모서리 | 카드·모달 `rounded-xl`, 버튼·입력창 `rounded-lg`, 칩 `rounded-full`, 카드 안 카테고리 배지 `rounded-md` |
+| 그림자 | 카드 `shadow-sm`, 호버 시 `hover:shadow-md`(테두리도 `hover:border-zinc-300` / `dark:hover:border-zinc-700`로 한 단계 진하게). 그 외에는 그림자를 쓰지 않는다 |
 
 ---
 
@@ -244,62 +244,70 @@ export function categoryColor(id: number | null) {
 
 ### 4.5 뉴스 카드
 
+정보 계층은 **분류 → 제목 → 요약 → 출처·액션** 순서다. 제목이 가장 강하고, 출처·날짜는 하단으로 내려 읽기 흐름을 방해하지 않게 한다.
+
 ```
 ┌───────────────────────────────────┐
-│ [모델/연구]      TechCrunch · 11월 18일 ✕ │  ← 배지 + 메타 + 삭제
+│ [모델/연구]                      ✕ │  ← 카테고리 배지 + 삭제(hover 시)
 │                                   │
-│ 한국어 제목이 최대 두 줄까지        │  ← 제목 (원문 링크)
+│ 한국어 제목이 최대 두 줄까지        │  ← 제목 (카드 전체가 원문 링크)
 │ 표시됩니다                         │
 │                                   │
 │ 한국어 요약 3~4문장. 최대 4줄까지    │  ← 요약
 │ 보여주고 나머지는 말줄임표로 …       │
-│                                   │
 │ ───────────────────────────────── │
-│ 원문 보기 ↗              [Notion 저장] │  ← 하단 액션
+│ TechCrunch · 11월 18일 ↗  [Notion 저장] │  ← 출처·날짜 + 액션
 └───────────────────────────────────┘
 ```
 
 ```tsx
-<article className="flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition hover:border-blue-200 hover:shadow-md dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-blue-900">
-  <div className="flex items-center justify-between gap-2">
-    <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryColor(article.categoryId)}`}>
+<article className="group relative flex flex-col rounded-xl border border-zinc-200 bg-white p-5 shadow-sm transition duration-200 ease-out hover:-translate-y-0.5 hover:border-zinc-300 hover:shadow-md has-[a:focus-visible]:ring-2 has-[a:focus-visible]:ring-blue-500 has-[a:focus-visible]:ring-offset-2 motion-reduce:transition-none motion-reduce:hover:translate-y-0 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-700 dark:has-[a:focus-visible]:ring-offset-zinc-950">
+  <div className="flex min-h-6 items-center justify-between gap-3">
+    <span className={`rounded-md px-2 py-0.5 text-xs font-medium ${categoryColor(article.categoryId)}`}>
       {categoryName ?? "미분류"}
     </span>
-    <div className="flex shrink-0 items-center gap-2">
-      <p className="text-xs text-zinc-500">
-        {sourceLabel} · <time dateTime={iso}>{formattedDate}</time>
-      </p>
-      <DeleteArticleButton />
-    </div>
+    <div className="relative z-10"><DeleteArticleButton /></div>
   </div>
 
-  <h2 className="mt-3 line-clamp-2 break-keep text-base font-semibold leading-snug text-zinc-900 sm:text-lg dark:text-zinc-100">
-    <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" className="transition-colors hover:text-blue-700 dark:hover:text-blue-400">
+  <h2 className="mt-3 line-clamp-2 break-keep text-base font-semibold leading-snug tracking-tight text-zinc-900 transition-colors group-hover:text-blue-700 sm:text-lg dark:text-zinc-100 dark:group-hover:text-blue-400">
+    <a href={article.originalUrl} target="_blank" rel="noopener noreferrer" title={article.originalTitle}
+       className="focus-visible:outline-none after:absolute after:inset-0 after:rounded-xl">
       {article.titleKo}
+      <span className="sr-only"> (원문을 새 탭에서 열기)</span>
     </a>
   </h2>
 
-  <p className="mb-4 mt-2 line-clamp-4 break-keep text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
+  <p className="mb-5 mt-2.5 line-clamp-4 break-keep text-sm leading-relaxed text-zinc-600 dark:text-zinc-400">
     {article.summaryKo}
   </p>
 
-  <div className="mt-auto flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
-    <a href={article.originalUrl} target="_blank" rel="noopener noreferrer"
-       className="text-sm font-medium text-blue-600 hover:underline dark:text-blue-400">
-      원문 보기 ↗
-    </a>
-    <NotionSaveButton />
+  <div className="mt-auto flex items-center justify-between gap-3 border-t border-zinc-100 pt-4 dark:border-zinc-800">
+    <p className="flex min-w-0 items-center gap-1.5 text-xs text-zinc-500 dark:text-zinc-400">
+      <span className="truncate font-medium text-zinc-700 dark:text-zinc-300">{sourceLabel}</span>
+      <span aria-hidden>·</span>
+      <time dateTime={iso} className="shrink-0 tabular-nums">{formattedDate}</time>
+      {/* ↗ 아이콘: 평소 opacity-0, 카드 hover 시 나타나며 오른쪽 위로 살짝 이동 */}
+    </p>
+    <div className="relative z-10 shrink-0"><NotionSaveButton /></div>
   </div>
 </article>
 ```
 
-- 같은 줄의 카드 높이가 달라도 하단 액션이 바닥에 맞춰지도록 액션 영역에 `mt-auto`를 준다. 요약과 액션 사이가 붙지 않도록 요약 `<p>`에 `mb-4`를 준다.
+- **카드 전체가 원문 링크**다. 제목 `<a>`의 `::after`가 카드 전체를 덮는다(stretched link). 카드 안의 버튼은 `relative z-10` 래퍼로 감싸 링크 위에 올린다. 링크가 하나뿐이라 스크린 리더와 키보드 탭 순서가 단순하다.
+- 키보드로 제목 링크에 포커스하면 카드 전체에 포커스 링(`has-[a:focus-visible]:ring-2`)이 생긴다.
+- **카드 높이**: 같은 줄의 카드 높이가 달라도 하단 영역이 바닥에 맞춰지도록 하단 영역에 `mt-auto`를 준다. 줄에서 가장 긴 카드도 요약이 구분선에 붙지 않도록 요약 `<p>`에 `mb-5`를 준다.
+- **출처·날짜**: 출처 이름은 `font-medium text-zinc-700`으로 날짜보다 한 단계 진하게 한다. 날짜는 `tabular-nums`로 숫자 폭을 맞춘다.
 - **출처 표기**: `techcrunch` → `TechCrunch`, `theverge` → `The Verge`.
 - **날짜 표기**: 올해 기사는 `11월 18일`, 이전 해는 `2025년 11월 18일`. `Intl.DateTimeFormat("ko-KR", …)`을 쓰고 한국 시간대(`Asia/Seoul`)로 표시한다. `publishedAt`이 없으면 날짜를 생략한다.
-- 카드에 마우스를 올리면 그림자가 짙어지고 테두리가 옅은 파랑으로 바뀐다. 제목 링크는 밑줄 대신 파란색(`hover:text-blue-700`)으로 바뀐다.
 - 원문 제목(`originalTitle`)은 제목 링크의 `title` 속성으로 넣어서 마우스를 올리면 보이게 한다.
-- **삭제 버튼**: 메타 오른쪽 끝에 단독 아이콘 버튼(✕, `size-5`, `aria-label="뉴스 삭제"`)을 둔다.
-  - 평소에는 `text-zinc-400`로 눈에 띄지 않게, 마우스를 올리면 Danger 색(`hover:bg-red-50 hover:text-red-600`)으로 바뀐다.
+- **hover 인터랙션** (모두 `duration-200 ease-out`):
+  - 카드가 2px 떠오르고(`-translate-y-0.5`) 그림자가 `shadow-md`로 짙어지며 테두리가 한 단계 진해진다(`zinc-300` / 다크 `zinc-700`).
+  - 제목이 파란색(`text-blue-700` / 다크 `text-blue-400`)으로 바뀐다.
+  - 날짜 옆에 ↗ 아이콘이 나타나 "원문으로 이동"을 알린다.
+  - `prefers-reduced-motion`이면 이동 애니메이션을 끈다(`motion-reduce:`).
+- **삭제 버튼**: 카테고리 배지 오른쪽 끝에 단독 아이콘 버튼(✕, `size-5`, `aria-label="뉴스 삭제"`)을 둔다.
+  - 마우스 환경(`pointer-fine:`)에서는 카드에 올리거나 카드 안에 포커스가 있을 때만 보인다. 터치 환경에서는 hover가 없으므로 항상 보인다. 삭제 중이거나 오류가 있으면 계속 보인다.
+  - 아이콘 색은 `text-zinc-500` / 다크 `text-zinc-400`(아이콘 대비 3:1 이상), 마우스를 올리면 Danger 색(`hover:bg-red-50 hover:text-red-600`)으로 바뀐다.
   - 누르면 브라우저 확인창(`이 뉴스를 삭제할까요?` + 한국어 제목)을 띄우고, 확인하면 DB에서 삭제한 뒤 목록을 다시 그린다.
   - 삭제 중에는 `disabled` + 아이콘 자리에 스피너. 실패하면 버튼 아래에 오류 박스(토스트 오류 스타일)를 띄운다.
 
@@ -359,14 +367,19 @@ export function categoryColor(id: number | null) {
 **로딩(스켈레톤)** — 카드 목록을 불러오는 동안 카드 모양 스켈레톤 6개를 보여준다. Suspense `fallback`으로 쓴다.
 
 ```tsx
-<div className="animate-pulse rounded-xl border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
-  <div className="h-5 w-20 rounded-full bg-zinc-200 dark:bg-zinc-800" />
+<div className="flex animate-pulse flex-col rounded-xl border border-zinc-200 bg-white p-5 sm:p-6 dark:border-zinc-800 dark:bg-zinc-900">
+  <div className="h-5 w-16 rounded-md bg-zinc-200 dark:bg-zinc-800" />
   <div className="mt-4 h-5 w-full rounded bg-zinc-200 dark:bg-zinc-800" />
   <div className="mt-2 h-5 w-2/3 rounded bg-zinc-200 dark:bg-zinc-800" />
-  <div className="mt-4 space-y-2">
+  <div className="mt-4 space-y-2.5">
     <div className="h-3.5 w-full rounded bg-zinc-100 dark:bg-zinc-800/60" />
     <div className="h-3.5 w-full rounded bg-zinc-100 dark:bg-zinc-800/60" />
     <div className="h-3.5 w-4/5 rounded bg-zinc-100 dark:bg-zinc-800/60" />
+  </div>
+  {/* 하단: 출처·날짜 + 버튼 자리 */}
+  <div className="mt-5 flex items-center justify-between border-t border-zinc-100 pt-4 dark:border-zinc-800">
+    <div className="h-3.5 w-28 rounded bg-zinc-100 dark:bg-zinc-800/60" />
+    <div className="h-8 w-20 rounded-lg bg-zinc-100 dark:bg-zinc-800/60" />
   </div>
 </div>
 ```
