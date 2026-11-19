@@ -31,7 +31,7 @@ npx drizzle-kit <generate|migrate|push|studio>   # DB 마이그레이션 (drizzl
 ## 계획된 아키텍처 (PRD 기준)
 
 - **인증 (Clerk, `@clerk/nextjs`)**: 로그인하지 않은 사용자는 모든 페이지·API 접근 불가. 미들웨어로 전역 보호하고, API 라우트에서도 로그인 여부를 확인한다.
-- **DB (Neon + Drizzle)**: `categories`, `articles` 두 테이블. `articles.original_url`이 unique이며 중복 판별 기준. `category_id`가 null이면 '미분류'. 카테고리 삭제 시 해당 기사는 null로 이동.
+- **DB (Neon + Drizzle)**: `categories`, `articles` 두 테이블. `articles.original_url`이 unique이며 중복 판별 기준. `category_id`가 null이면 '미분류'. 기사 삭제는 `deleted_at`을 기록하는 soft delete다 — 행을 남겨야 삭제한 기사가 다시 수집되지 않으므로, 기사를 화면에 보여주거나 세는 쿼리에는 반드시 `isNull(articles.deletedAt)`을 넣는다(중복 판별 쿼리에는 넣지 않는다). 카테고리 삭제 시 해당 기사는 null로 이동.
 - **뉴스 가져오기 흐름**: 버튼 클릭 시에만 실행(자동 주기 수집 없음) → `rss-parser`로 피드당 최근 15개 → DB에 있는 URL은 건너뜀 → 새 기사만 Claude API(`@anthropic-ai/sdk`)로 번역·요약·분류 → 저장. **이미 처리한 기사는 Claude를 다시 호출하지 않는다**(비용). 한 피드가 실패해도 나머지는 계속 처리하고 실패 출처를 알린다.
 - **분류 기준**: 카테고리의 `description`을 Claude 프롬프트에 분류 기준으로 넣는다. 카테고리 변경은 이후 수집분부터 적용(선택 기능: 수동 '전체 재분류').
 - **Notion 저장**: 연동 방식은 PRD 7장에서 미결정. 현재는 권장안인 Notion API 직접 호출(`@notionhq/client`)을 전제로 설치됨. 저장 성공 시 `articles.notion_page_id`를 기록해 중복 저장을 막는다.

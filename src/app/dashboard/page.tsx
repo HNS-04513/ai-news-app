@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { UserButton } from "@clerk/nextjs";
-import { asc, count, desc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories } from "@/db/schema";
 import { NewsCard, NewsCardSkeleton } from "@/components/news-card";
@@ -77,6 +77,9 @@ async function DashboardContent({
   await connection();
   const query = await searchParams;
 
+  // 삭제한 기사(deleted_at 있음)는 목록과 개수에서 모두 뺀다
+  const notDeleted = isNull(articles.deletedAt);
+
   const [categoryRows, [totals]] = await Promise.all([
     // 카테고리별 기사 수 (생성순)
     db
@@ -86,7 +89,11 @@ async function DashboardContent({
         count: count(articles.id),
       })
       .from(categories)
-      .leftJoin(articles, eq(articles.categoryId, categories.id))
+      // 조건을 where가 아니라 join에 넣어야 기사가 0건인 카테고리도 남는다
+      .leftJoin(
+        articles,
+        and(eq(articles.categoryId, categories.id), notDeleted),
+      )
       .groupBy(categories.id)
       .orderBy(asc(categories.createdAt), asc(categories.id)),
     db
@@ -97,7 +104,8 @@ async function DashboardContent({
             Number,
           ),
       })
-      .from(articles),
+      .from(articles)
+      .where(notDeleted),
   ]);
 
   let selected = parseFilter(query.category);
@@ -122,12 +130,14 @@ async function DashboardContent({
   // 범위를 벗어난 페이지 번호는 마지막 페이지로 맞춘다
   const page = Math.min(parsePage(query.page), totalPages);
 
-  const where =
+  const where = and(
+    notDeleted,
     selected === "all"
       ? undefined
       : selected === "uncategorized"
         ? isNull(articles.categoryId)
-        : eq(articles.categoryId, selected);
+        : eq(articles.categoryId, selected),
+  );
 
   const rows = await db
     .select({

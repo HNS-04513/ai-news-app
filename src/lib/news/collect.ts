@@ -24,6 +24,7 @@ export async function collectNews(): Promise<CollectResult> {
   if (unique.length === 0) return empty;
 
   // 2) DB에 이미 있는 URL은 건너뛴다 (이미 처리한 기사는 Claude를 다시 호출하지 않는다)
+  //    사용자가 삭제한 기사(deleted_at 있음)도 일부러 포함해서, 삭제한 뉴스가 다시 들어오지 않게 한다
   const existing = await db
     .select({ url: articles.originalUrl })
     .from(articles)

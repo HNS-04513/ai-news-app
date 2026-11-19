@@ -40,7 +40,8 @@ export async function saveArticleToNotion(
     })
     .from(articles)
     .leftJoin(categories, eq(articles.categoryId, categories.id))
-    .where(eq(articles.id, articleId))
+    // 삭제한 기사는 저장하지 않는다 (다른 탭에 카드가 남아 있는 경우 등)
+    .where(and(eq(articles.id, articleId), isNull(articles.deletedAt)))
     .limit(1);
 
   if (!article) return { ok: false, error: "기사를 찾을 수 없습니다." };
