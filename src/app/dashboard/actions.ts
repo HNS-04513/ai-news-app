@@ -1,0 +1,61 @@
+"use server";
+
+import { auth } from "@clerk/nextjs/server";
+import { refresh } from "next/cache";
+import { db } from "@/db";
+import { categories } from "@/db/schema";
+
+export type CreateCategoryState = {
+  ok: boolean;
+  errors?: { name?: string; description?: string; form?: string };
+};
+
+const NAME_MAX = 30;
+const DESCRIPTION_MAX = 300;
+
+export async function createCategory(
+  formData: FormData,
+): Promise<CreateCategoryState> {
+  // 서버 액션은 POST로 직접 호출될 수 있으므로 여기서도 로그인을 확인한다
+  const { userId } = await auth();
+  if (!userId) {
+    return { ok: false, errors: { form: "로그인이 필요합니다." } };
+  }
+
+  const name = String(formData.get("name") ?? "").trim();
+  const description = String(formData.get("description") ?? "").trim();
+
+  const errors: CreateCategoryState["errors"] = {};
+  if (!name) errors.name = "이름을 입력해 주세요.";
+  else if (name.length > NAME_MAX)
+    errors.name = `이름은 ${NAME_MAX}자 이하로 입력해 주세요.`;
+  else if (name === "전체" || name === "미분류")
+    errors.name = "이미 쓰고 있는 이름입니다.";
+  if (!description) errors.description = "설명을 입력해 주세요.";
+  else if (description.length > DESCRIPTION_MAX)
+    errors.description = `설명은 ${DESCRIPTION_MAX}자 이하로 입력해 주세요.`;
+  if (errors.name || errors.description) return { ok: false, errors };
+
+  try {
+    const inserted = await db
+      .insert(categories)
+      .values({ name, description })
+      .onConflictDoNothing({ target: categories.name })
+      .returning({ id: categories.id });
+
+    if (inserted.length === 0) {
+      return { ok: false, errors: { name: "이미 있는 카테고리 이름입니다." } };
+    }
+  } catch (error) {
+    console.error("카테고리 추가 실패", error);
+    return {
+      ok: false,
+      errors: {
+        form: "카테고리를 추가하지 못했습니다. 잠시 후 다시 시도해 주세요.",
+      },
+    };
+  }
+
+  refresh();
+  return { ok: true };
+}

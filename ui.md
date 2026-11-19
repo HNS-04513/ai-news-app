@@ -171,8 +171,8 @@ export function categoryColor(id: number | null) {
   <ul className="flex w-max items-center gap-2 sm:w-auto sm:flex-wrap">
     {/* 전체, 각 카테고리, 미분류 */}
     <li>
-      <button
-        aria-pressed={selected}
+      <Link href={href} scroll={false}
+        aria-current={selected ? "page" : undefined}
         className={
           selected
             ? "rounded-full bg-blue-600 px-3.5 py-1.5 text-sm font-medium text-white dark:bg-blue-500"
@@ -181,7 +181,7 @@ export function categoryColor(id: number | null) {
       >
         {name}
         <span className="ml-1.5 text-xs opacity-70">{count}</span>
-      </button>
+      </Link>
     </li>
 
     {/* 맨 끝: 카테고리 추가 */}
@@ -201,7 +201,8 @@ export function categoryColor(id: number | null) {
 - **'미분류'** 칩은 미분류 기사가 1건 이상일 때만 보여준다.
 - **추가 버튼**은 점선 테두리로 필터 칩과 구분한다. 필터가 아니라 행동이라는 뜻이다.
 - 모바일에서는 줄바꿈 없이 가로 스크롤하고, `sm` 이상에서는 줄바꿈한다.
-- 선택한 카테고리는 URL 쿼리(`/dashboard?category=3`)에 반영해서 새로고침해도 유지되게 한다.
+- 선택한 카테고리는 URL 쿼리에 반영해서 새로고침해도 유지되게 한다: 전체는 `/dashboard`, 카테고리는 `/dashboard?category=3`, 미분류는 `/dashboard?category=uncategorized`. 없는 카테고리 id는 전체로 본다.
+- 칩은 URL을 바꾸는 이동이므로 `<button>`이 아니라 `next/link`의 `<Link>`로 만들고, 선택 상태는 `aria-current="page"`로 알린다.
 
 ### 4.4 카테고리 추가 모달
 
@@ -236,6 +237,7 @@ export function categoryColor(id: number | null) {
 ```
 
 - 열리면 이름 입력창에 포커스를 주고, `Esc`나 배경 클릭으로 닫는다.
+- 이름과 설명은 둘 다 필수다(이름 30자, 설명 300자 이하). `전체`, `미분류`는 이름으로 쓸 수 없다.
 - 이름이 비었거나 이미 있는 이름이면 입력창 아래에 빨간 문구로 알린다(`text-xs text-red-600`), 입력창 테두리는 `border-red-500`.
 - 추가에 성공하면 모달을 닫고, 새 칩이 카테고리 바의 추가 버튼 바로 앞에 나타난다.
 - 수정·삭제는 카테고리 관리 화면(`/categories`)에서 한다. 이 화면의 입력 폼도 같은 스타일을 쓴다.
@@ -375,7 +377,7 @@ export function categoryColor(id: number | null) {
 ## 6. 접근성 체크리스트
 
 - [ ] 모든 인터랙티브 요소에 키보드 포커스 링이 보인다(`focus-visible:ring-2`).
-- [ ] 카테고리 칩은 `aria-pressed`로 선택 상태를 알린다.
+- [ ] 카테고리 칩은 `aria-current="page"`로 선택 상태를 알린다.
 - [ ] 모달은 `role="dialog"`, `aria-modal`, 제목 연결(`aria-labelledby`), `Esc` 닫기를 지원한다.
 - [ ] 토스트는 `aria-live="polite"`(오류는 `role="alert"`)로 스크린 리더에 전달된다.
 - [ ] 외부 링크는 `target="_blank" rel="noopener noreferrer"`를 쓴다.

@@ -2,10 +2,15 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { UserButton } from "@clerk/nextjs";
-import { desc, eq, sql } from "drizzle-orm";
+import { asc, count, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/db";
 import { articles, categories } from "@/db/schema";
 import { NewsCard, NewsCardSkeleton } from "@/components/news-card";
+import {
+  CategoryBar,
+  CategoryBarSkeleton,
+  type CategoryFilter,
+} from "@/components/category-bar";
 
 export const metadata: Metadata = {
   title: "대시보드 | AI 뉴스 수집기",
@@ -13,7 +18,9 @@ export const metadata: Metadata = {
 
 const GRID = "grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5 lg:grid-cols-3";
 
-export default function DashboardPage() {
+export default function DashboardPage({
+  searchParams,
+}: PageProps<"/dashboard">) {
   return (
     <div className="min-h-full flex-1 bg-zinc-50 dark:bg-zinc-950">
       <header className="sticky top-0 z-10 border-b border-zinc-200 bg-white/80 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/80">
@@ -28,17 +35,72 @@ export default function DashboardPage() {
       </header>
 
       <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
-        <Suspense fallback={<NewsGridSkeleton />}>
-          <NewsGrid />
+        {/* searchParams는 요청 시점 값이라 Suspense 안에서 읽는다 (정적 셸 유지) */}
+        <Suspense fallback={<DashboardSkeleton />}>
+          <DashboardContent searchParams={searchParams} />
         </Suspense>
       </main>
     </div>
   );
 }
 
-async function NewsGrid() {
+function parseFilter(value: string | string[] | undefined): CategoryFilter {
+  const v = Array.isArray(value) ? value[0] : value;
+  if (v === "uncategorized") return "uncategorized";
+  if (v && /^\d+$/.test(v)) return Number(v);
+  return "all";
+}
+
+async function DashboardContent({
+  searchParams,
+}: {
+  searchParams: PageProps<"/dashboard">["searchParams"];
+}) {
   // 요청 시점마다 최신 데이터를 읽는다 (캐시하지 않음)
   await connection();
+  const query = await searchParams;
+
+  const [categoryRows, [totals]] = await Promise.all([
+    // 카테고리별 기사 수 (생성순)
+    db
+      .select({
+        id: categories.id,
+        name: categories.name,
+        count: count(articles.id),
+      })
+      .from(categories)
+      .leftJoin(articles, eq(articles.categoryId, categories.id))
+      .groupBy(categories.id)
+      .orderBy(asc(categories.createdAt), asc(categories.id)),
+    db
+      .select({
+        total: count(),
+        uncategorized:
+          sql<number>`count(*) filter (where ${articles.categoryId} is null)`.mapWith(
+            Number,
+          ),
+      })
+      .from(articles),
+  ]);
+
+  let selected = parseFilter(query.category);
+  // 없는 카테고리 id(삭제됨 등)나 미분류 기사가 없을 때는 '전체'로 본다
+  if (
+    typeof selected === "number" &&
+    !categoryRows.some((c) => c.id === selected)
+  ) {
+    selected = "all";
+  }
+  if (selected === "uncategorized" && totals.uncategorized === 0) {
+    selected = "all";
+  }
+
+  const where =
+    selected === "all"
+      ? undefined
+      : selected === "uncategorized"
+        ? isNull(articles.categoryId)
+        : eq(articles.categoryId, selected);
 
   const rows = await db
     .select({
@@ -55,42 +117,70 @@ async function NewsGrid() {
     })
     .from(articles)
     .leftJoin(categories, eq(articles.categoryId, categories.id))
+    .where(where)
     // 최신순: 발행일 기준, 발행일이 없으면 수집 시각으로 대체
     .orderBy(
       desc(sql`coalesce(${articles.publishedAt}, ${articles.createdAt})`),
       desc(articles.id),
     );
 
-  if (rows.length === 0) {
-    return (
-      <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
-        <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
-          아직 수집한 뉴스가 없습니다
-        </p>
-        <p className="mt-1 text-sm text-zinc-500">
-          상단의 ‘뉴스 가져오기’ 버튼을 눌러 최신 AI 뉴스를 받아 보세요.
-        </p>
-      </div>
-    );
-  }
-
   const now = new Date();
 
   return (
-    <div className={GRID}>
-      {rows.map((article) => (
-        <NewsCard key={article.id} article={article} now={now} />
-      ))}
+    <>
+      <CategoryBar
+        categories={categoryRows}
+        totalCount={totals.total}
+        uncategorizedCount={totals.uncategorized}
+        selected={selected}
+      />
+
+      {totals.total === 0 ? (
+        <EmptyState
+          title="아직 수집한 뉴스가 없습니다"
+          description="상단의 ‘뉴스 가져오기’ 버튼을 눌러 최신 AI 뉴스를 받아 보세요."
+        />
+      ) : rows.length === 0 ? (
+        <EmptyState title="이 카테고리에 해당하는 뉴스가 없습니다." />
+      ) : (
+        <div className={GRID}>
+          {rows.map((article) => (
+            <NewsCard key={article.id} article={article} now={now} />
+          ))}
+        </div>
+      )}
+    </>
+  );
+}
+
+function EmptyState({
+  title,
+  description,
+}: {
+  title: string;
+  description?: string;
+}) {
+  return (
+    <div className="rounded-xl border border-dashed border-zinc-300 bg-white px-6 py-16 text-center dark:border-zinc-700 dark:bg-zinc-900">
+      <p className="text-base font-medium text-zinc-900 dark:text-zinc-100">
+        {title}
+      </p>
+      {description && (
+        <p className="mt-1 text-sm text-zinc-500">{description}</p>
+      )}
     </div>
   );
 }
 
-function NewsGridSkeleton() {
+function DashboardSkeleton() {
   return (
-    <div className={GRID} aria-busy="true" aria-label="뉴스 불러오는 중">
-      {Array.from({ length: 6 }, (_, i) => (
-        <NewsCardSkeleton key={i} />
-      ))}
+    <div className="space-y-6" aria-busy="true" aria-label="뉴스 불러오는 중">
+      <CategoryBarSkeleton />
+      <div className={GRID}>
+        {Array.from({ length: 6 }, (_, i) => (
+          <NewsCardSkeleton key={i} />
+        ))}
+      </div>
     </div>
   );
 }
