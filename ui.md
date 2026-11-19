@@ -246,7 +246,7 @@ export function categoryColor(id: number | null) {
 
 ```
 ┌───────────────────────────────────┐
-│ [모델/연구]          TechCrunch · 11월 18일 │  ← 배지 + 메타
+│ [모델/연구]      TechCrunch · 11월 18일 ✕ │  ← 배지 + 메타 + 삭제
 │                                   │
 │ 한국어 제목이 최대 두 줄까지        │  ← 제목 (원문 링크)
 │ 표시됩니다                         │
@@ -265,9 +265,12 @@ export function categoryColor(id: number | null) {
     <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${categoryColor(article.categoryId)}`}>
       {categoryName ?? "미분류"}
     </span>
-    <p className="shrink-0 text-xs text-zinc-500">
-      {sourceLabel} · <time dateTime={iso}>{formattedDate}</time>
-    </p>
+    <div className="flex shrink-0 items-center gap-2">
+      <p className="text-xs text-zinc-500">
+        {sourceLabel} · <time dateTime={iso}>{formattedDate}</time>
+      </p>
+      <DeleteArticleButton />
+    </div>
   </div>
 
   <h2 className="mt-3 line-clamp-2 break-keep text-base font-semibold leading-snug text-zinc-900 sm:text-lg dark:text-zinc-100">
@@ -295,6 +298,10 @@ export function categoryColor(id: number | null) {
 - **날짜 표기**: 올해 기사는 `11월 18일`, 이전 해는 `2025년 11월 18일`. `Intl.DateTimeFormat("ko-KR", …)`을 쓰고 한국 시간대(`Asia/Seoul`)로 표시한다. `publishedAt`이 없으면 날짜를 생략한다.
 - 카드에 마우스를 올리면 그림자가 짙어지고 테두리가 옅은 파랑으로 바뀐다. 제목 링크는 밑줄 대신 파란색(`hover:text-blue-700`)으로 바뀐다.
 - 원문 제목(`originalTitle`)은 제목 링크의 `title` 속성으로 넣어서 마우스를 올리면 보이게 한다.
+- **삭제 버튼**: 메타 오른쪽 끝에 단독 아이콘 버튼(✕, `size-5`, `aria-label="뉴스 삭제"`)을 둔다.
+  - 평소에는 `text-zinc-400`로 눈에 띄지 않게, 마우스를 올리면 Danger 색(`hover:bg-red-50 hover:text-red-600`)으로 바뀐다.
+  - 누르면 브라우저 확인창(`이 뉴스를 삭제할까요?` + 한국어 제목)을 띄우고, 확인하면 DB에서 삭제한 뒤 목록을 다시 그린다.
+  - 삭제 중에는 `disabled` + 아이콘 자리에 스피너. 실패하면 버튼 아래에 오류 박스(토스트 오류 스타일)를 띄운다.
 
 **카드 그리드**
 
