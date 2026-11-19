@@ -37,9 +37,14 @@ export function FetchNewsButton() {
                 ? `새 뉴스 ${result.added}건을 추가했습니다.`
                 : "새로운 뉴스가 없습니다.",
             failure:
-              result.failedSources.length > 0
-                ? `${result.failedSources.join(", ")}에서 가져오지 못했습니다.`
-                : undefined,
+              [
+                result.failedSources.length > 0 &&
+                  `${result.failedSources.join(", ")}에서 가져오지 못했습니다.`,
+                result.failedArticles > 0 &&
+                  `${result.failedArticles}건은 처리하지 못해 다음에 다시 시도합니다.`,
+              ]
+                .filter(Boolean)
+                .join(" ") || undefined,
           });
         }
       } catch {

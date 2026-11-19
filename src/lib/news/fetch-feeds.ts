@@ -14,7 +14,14 @@ export type FeedItem = {
   publishedAt: Date;
 };
 
-const parser = new Parser({ timeout: 10_000 });
+// rss-parser 기본 User-Agent("rss-parser")는 TechCrunch가 403으로 막으므로 앱 이름을 밝힌다
+const parser = new Parser({
+  timeout: 10_000,
+  headers: {
+    "User-Agent": "ai-news-collector/1.0 (RSS reader)",
+    Accept: "application/rss+xml, application/xml;q=0.9, */*;q=0.8",
+  },
+});
 
 // 추적용 쿼리(utm_*)와 #해시를 지워서 같은 기사가 다른 URL로 저장되지 않게 한다
 export function normalizeUrl(raw: string): string | null {
