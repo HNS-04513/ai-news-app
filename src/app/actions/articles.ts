@@ -1,7 +1,7 @@
 "use server";
 
 import { auth } from "@clerk/nextjs/server";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db } from "@/db";
 import { articles } from "@/db/schema";
@@ -20,8 +20,13 @@ export async function deleteArticle(
   }
 
   try {
-    // 이미 지워진 기사여도 결과는 같으므로 성공으로 본다
-    await db.delete(articles).where(eq(articles.id, articleId));
+    // 행을 지우지 않고 deleted_at만 기록한다. original_url이 DB에 남아 있어야
+    // 다음 '뉴스 가져오기' 때 같은 기사가 새 기사로 다시 수집되지 않는다.
+    // 이미 삭제된 기사여도 결과는 같으므로 성공으로 본다
+    await db
+      .update(articles)
+      .set({ deletedAt: new Date() })
+      .where(and(eq(articles.id, articleId), isNull(articles.deletedAt)));
   } catch (error) {
     console.error("[deleteArticle] 기사 삭제 실패", error);
     return {

@@ -126,6 +126,7 @@
 | category_id | int FK → categories.id, nullable | null이면 '미분류' |
 | published_at | timestamp | 발행일 |
 | notion_page_id | text, nullable | Notion 저장 시 페이지 ID |
+| deleted_at | timestamp, nullable | 사용자가 삭제한 시각. 행은 남겨 중복 판별에 쓰고, 화면에서는 null인 기사만 보여준다 |
 | created_at | timestamp | |
 
 ---

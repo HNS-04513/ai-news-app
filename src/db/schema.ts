@@ -38,6 +38,9 @@ export const articles = pgTable(
     publishedAt: timestamp("published_at", { withTimezone: true }),
     // Notion 저장 성공 시 기록 (중복 저장 방지)
     notionPageId: text("notion_page_id"),
+    // 사용자가 삭제한 시각. 행은 남겨 두어 original_url 중복 판별에 계속 쓰이므로
+    // 삭제한 기사가 다음 수집 때 다시 들어오지 않는다. 화면에서는 null인 행만 보여준다
+    deletedAt: timestamp("deleted_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true })
       .notNull()
       .defaultNow(),
