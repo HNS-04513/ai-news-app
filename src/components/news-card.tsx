@@ -1,6 +1,7 @@
 import type { Article } from "@/db/schema";
 import { categoryColor } from "@/lib/category-colors";
 import { formatArticleDate, sourceLabel } from "@/lib/format";
+import { NotionSaveButton } from "@/components/notion-save-button";
 
 export type NewsCardArticle = Pick<
   Article,
@@ -14,9 +15,6 @@ export type NewsCardArticle = Pick<
   | "publishedAt"
   | "notionPageId"
 > & { categoryName: string | null };
-
-const secondaryButton =
-  "inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-1.5 text-sm font-medium text-zinc-700 hover:bg-zinc-50 disabled:cursor-not-allowed disabled:opacity-60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:focus-visible:ring-offset-zinc-900";
 
 export function NewsCard({
   article,
@@ -71,21 +69,10 @@ export function NewsCard({
         >
           원문 보기 ↗
         </a>
-        {article.notionPageId ? (
-          <span className="text-sm font-medium text-emerald-600 dark:text-emerald-400">
-            ✓ 저장됨
-          </span>
-        ) : (
-          // TODO: Notion 저장 API(F5)가 생기면 클라이언트 컴포넌트로 교체
-          <button
-            type="button"
-            disabled
-            title="Notion 저장 기능은 준비 중입니다"
-            className={secondaryButton}
-          >
-            Notion 저장
-          </button>
-        )}
+        <NotionSaveButton
+          articleId={article.id}
+          initialSaved={article.notionPageId !== null}
+        />
       </div>
     </article>
   );
