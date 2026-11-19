@@ -105,16 +105,20 @@ export function categoryColor(id: number | null) {
 │ └──────────┘ └──────────┘ └──────────┘                   │
 │ ┌──────────┐ ┌──────────┐ ┌──────────┐                   │
 │ │   …      │ │   …      │ │   …      │                   │
+├──────────────────────────────────────────────────────────┤
+│ Copyright © 2026 AI 뉴스 수집기          Powered by Claude │  ← 푸터
 └──────────────────────────────────────────────────────────┘
 ```
 
 ```tsx
-<div className="min-h-full bg-zinc-50 dark:bg-zinc-950">
+<div className="flex min-h-full flex-1 flex-col bg-zinc-50 dark:bg-zinc-950">
   <AppHeader />
-  <main className="mx-auto max-w-6xl space-y-6 px-4 py-6 sm:px-6">
+  {/* flex-1: 기사가 적어도 푸터가 화면 아래에 붙는다 */}
+  <main className="mx-auto w-full max-w-6xl flex-1 space-y-6 px-4 py-6 sm:px-6">
     <CategoryBar />
     <NewsGrid />
   </main>
+  <AppFooter />
 </div>
 ```
 
@@ -387,6 +391,22 @@ export function categoryColor(id: number | null) {
 뉴스를 가져오는 동안에는 기존 카드 목록을 그대로 두고, 버튼만 로딩 상태로 바꾼다(목록을 스켈레톤으로 바꾸지 않는다).
 
 ---
+
+### 4.9 푸터
+
+대시보드 맨 아래에 둔다. 헤더처럼 무채색이고, 콘텐츠와 같은 폭(`max-w-6xl`)에 맞춘다. 배경은 따로 칠하지 않고 위쪽 테두리로만 구분한다.
+
+```tsx
+<footer className="border-t border-zinc-200 dark:border-zinc-800">
+  <div className="mx-auto flex max-w-6xl flex-col items-center gap-1 px-4 py-6 text-xs text-zinc-500 sm:flex-row sm:justify-between sm:px-6 dark:text-zinc-400">
+    <p>Copyright © 2026 AI 뉴스 수집기</p>
+    <p>Powered by <span className="font-medium text-zinc-700 dark:text-zinc-300">Claude</span></p>
+  </div>
+</footer>
+```
+
+- 모바일은 두 줄 가운데 정렬, `sm` 이상은 한 줄 양 끝 정렬.
+- 연도는 고정값으로 적는다. `new Date()`로 계산하면 정적 셸에 넣을 수 없다(`cacheComponents`).
 
 ## 5. 아이콘
 
